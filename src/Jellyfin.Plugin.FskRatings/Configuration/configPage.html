@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>FSK Rating Updater</title>
+</head>
+<body>
+<div id="FskRatingsConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox,emby-select">
+    <div data-role="content">
+        <div class="content-primary">
+            <form id="FskRatingsConfigForm">
+                <div class="sectionTitleContainer flex align-items-center">
+                    <h2 class="sectionTitle">FSK Rating Updater</h2>
+                </div>
+
+                <div class="inputContainer">
+                    <input is="emby-input" type="text" id="TmdbApiKey" label="TMDb API Key" />
+                    <div class="fieldDescription">
+                        Free key from themoviedb.org (Settings &rarr; API). Leave empty to only normalize existing ratings without any online lookups.
+                    </div>
+                </div>
+
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label>
+                        <input is="emby-checkbox" type="checkbox" id="DryRun" />
+                        <span>Dry run (recommended for the first run)</span>
+                    </label>
+                    <div class="fieldDescription checkboxFieldDescription">
+                        Only log the proposed changes (see Dashboard &rarr; Logs) without writing anything.
+                    </div>
+                </div>
+
+                <div class="checkboxContainer">
+                    <label>
+                        <input is="emby-checkbox" type="checkbox" id="UpdateMovies" />
+                        <span>Update movies</span>
+                    </label>
+                </div>
+
+                <div class="checkboxContainer">
+                    <label>
+                        <input is="emby-checkbox" type="checkbox" id="UpdateSeries" />
+                        <span>Update TV series</span>
+                    </label>
+                </div>
+
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label>
+                        <input is="emby-checkbox" type="checkbox" id="OverwriteExistingFsk" />
+                        <span>Re-fetch items that already have a valid FSK rating</span>
+                    </label>
+                    <div class="fieldDescription checkboxFieldDescription">
+                        When off, an existing FSK rating is only reformatted (e.g. "FSK 12" &rarr; "FSK-12"). When on, TMDb is asked again and may overwrite it.
+                    </div>
+                </div>
+
+                <div class="selectContainer">
+                    <select is="emby-select" id="FallbackMode" label="If no German rating can be determined">
+                        <option value="KeepUnchanged">Keep the existing rating unchanged</option>
+                        <option value="MapFromForeign">Map from foreign rating (PG-13 &rarr; FSK-12, approximate)</option>
+                        <option value="ClearRating">Clear the rating (item becomes unrated)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+                        <span>Save</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        (function () {
+            var pluginId = "b7c3f1e2-9a4d-4e8b-b0c6-2f5d8a913c47";
+
+            document.querySelector('#FskRatingsConfigPage')
+                .addEventListener('pageshow', function () {
+                    Dashboard.showLoadingMsg();
+                    ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                        document.querySelector('#TmdbApiKey').value = config.TmdbApiKey || '';
+                        document.querySelector('#DryRun').checked = config.DryRun;
+                        document.querySelector('#UpdateMovies').checked = config.UpdateMovies;
+                        document.querySelector('#UpdateSeries').checked = config.UpdateSeries;
+                        document.querySelector('#OverwriteExistingFsk').checked = config.OverwriteExistingFsk;
+                        document.querySelector('#FallbackMode').value = config.FallbackMode || 'KeepUnchanged';
+                        Dashboard.hideLoadingMsg();
+                    });
+                });
+
+            document.querySelector('#FskRatingsConfigForm')
+                .addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    Dashboard.showLoadingMsg();
+                    ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                        config.TmdbApiKey = document.querySelector('#TmdbApiKey').value.trim();
+                        config.DryRun = document.querySelector('#DryRun').checked;
+                        config.UpdateMovies = document.querySelector('#UpdateMovies').checked;
+                        config.UpdateSeries = document.querySelector('#UpdateSeries').checked;
+                        config.OverwriteExistingFsk = document.querySelector('#OverwriteExistingFsk').checked;
+                        config.FallbackMode = document.querySelector('#FallbackMode').value;
+                        ApiClient.updatePluginConfiguration(pluginId, config).then(function (result) {
+                            Dashboard.processPluginConfigurationUpdateResult(result);
+                        });
+                    });
+                    return false;
+                });
+        })();
+    </script>
+</div>
+</body>
+</html>

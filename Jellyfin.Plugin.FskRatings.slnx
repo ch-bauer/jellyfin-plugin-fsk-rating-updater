@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/tests/">
+    <Project Path="tests/Jellyfin.Plugin.FskRatings.Tests/Jellyfin.Plugin.FskRatings.Tests.csproj" />
+  </Folder>
+  <Project Path="src/Jellyfin.Plugin.FskRatings/Jellyfin.Plugin.FskRatings.csproj" />
+</Solution>

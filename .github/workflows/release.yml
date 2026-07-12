@@ -1,0 +1,40 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Test
+        run: dotnet test tests/Jellyfin.Plugin.FskRatings.Tests
+
+      - name: Build
+        run: dotnet publish src/Jellyfin.Plugin.FskRatings -c Release -o publish
+
+      - name: Package
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir package
+          cp publish/Jellyfin.Plugin.FskRatings.dll package/
+          cp meta.json package/
+          (cd package && zip "../fsk-rating-updater_${VERSION}.zip" ./*)
+          echo "MD5 checksum for manifest.json:"
+          md5sum "fsk-rating-updater_${VERSION}.zip"
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: fsk-rating-updater_*.zip
+          generate_release_notes: true
