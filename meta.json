@@ -3,6 +3,7 @@
   "changelog": "Initial release: FSK normalization, TMDb German certification lookup, configurable fallback, dry-run mode.",
   "description": "Standardizes age ratings to the German FSK format (FSK-0/6/12/16/18) and fills in missing or foreign ratings using official German certifications from TMDb.",
   "guid": "b7c3f1e2-9a4d-4e8b-b0c6-2f5d8a913c47",
+  "imageUrl": "https://raw.githubusercontent.com/ch-bauer/jellyfin-plugin-fsk-rating-updater/main/images/icon.png",
   "name": "FSK Rating Updater",
   "overview": "German FSK age ratings for the whole library.",
   "owner": "Christian",

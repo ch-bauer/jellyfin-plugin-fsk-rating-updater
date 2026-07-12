@@ -6,6 +6,7 @@
     "overview": "German FSK age ratings for the whole library.",
     "owner": "Christian",
     "category": "Metadata",
+    "imageUrl": "https://raw.githubusercontent.com/ch-bauer/jellyfin-plugin-fsk-rating-updater/main/images/icon.png",
     "versions": [
       {
         "version": "1.0.0.0",
