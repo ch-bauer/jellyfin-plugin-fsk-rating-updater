@@ -13,7 +13,7 @@
         "changelog": "Netflix-style FSK overlay: the web client now fades in the FSK badge for a few seconds when playback starts. Configurable (on/off, duration) in the plugin settings.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/ch-bauer/jellyfin-plugin-fsk-rating-updater/releases/download/v1.2.0.0/fsk-rating-updater_1.2.0.0.zip",
-        "checksum": "TBD",
+        "checksum": "ecc787816c66185d4827a4c0588e0d56",
         "timestamp": "2026-07-19T00:00:00Z"
       },
       {
