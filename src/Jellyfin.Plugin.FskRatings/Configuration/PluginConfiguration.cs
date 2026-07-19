@@ -51,6 +51,12 @@ public class PluginConfiguration : BasePluginConfiguration
     public bool UpdateSeries { get; set; } = true;
 
     /// <summary>
+    /// Gets or sets a value indicating whether seasons and episodes are processed
+    /// in addition to the series itself. Only effective when <see cref="UpdateSeries"/> is on.
+    /// </summary>
+    public bool UpdateSeasonsAndEpisodes { get; set; } = true;
+
+    /// <summary>
     /// Gets or sets a value indicating whether items that already carry a valid FSK
     /// rating are re-fetched from TMDb instead of only being reformatted.
     /// </summary>

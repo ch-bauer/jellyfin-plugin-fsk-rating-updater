@@ -45,6 +45,16 @@
 
                 <div class="checkboxContainer checkboxContainer-withDescription">
                     <label>
+                        <input is="emby-checkbox" type="checkbox" id="UpdateSeasonsAndEpisodes" />
+                        <span>Also update seasons and episodes</span>
+                    </label>
+                    <div class="fieldDescription checkboxFieldDescription">
+                        Seasons and episodes use the series certification from TMDb and otherwise inherit the rating from their parent. Requires "Update TV series".
+                    </div>
+                </div>
+
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label>
                         <input is="emby-checkbox" type="checkbox" id="OverwriteExistingFsk" />
                         <span>Re-fetch items that already have a valid FSK rating</span>
                     </label>
@@ -82,6 +92,7 @@
                         document.querySelector('#DryRun').checked = config.DryRun;
                         document.querySelector('#UpdateMovies').checked = config.UpdateMovies;
                         document.querySelector('#UpdateSeries').checked = config.UpdateSeries;
+                        document.querySelector('#UpdateSeasonsAndEpisodes').checked = config.UpdateSeasonsAndEpisodes;
                         document.querySelector('#OverwriteExistingFsk').checked = config.OverwriteExistingFsk;
                         document.querySelector('#FallbackMode').value = config.FallbackMode || 'KeepUnchanged';
                         Dashboard.hideLoadingMsg();
@@ -97,6 +108,7 @@
                         config.DryRun = document.querySelector('#DryRun').checked;
                         config.UpdateMovies = document.querySelector('#UpdateMovies').checked;
                         config.UpdateSeries = document.querySelector('#UpdateSeries').checked;
+                        config.UpdateSeasonsAndEpisodes = document.querySelector('#UpdateSeasonsAndEpisodes').checked;
                         config.OverwriteExistingFsk = document.querySelector('#OverwriteExistingFsk').checked;
                         config.FallbackMode = document.querySelector('#FallbackMode').value;
                         ApiClient.updatePluginConfiguration(pluginId, config).then(function (result) {

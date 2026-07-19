@@ -74,6 +74,11 @@ public class UpdateFskRatingsTask : IScheduledTask
         if (config.UpdateSeries)
         {
             itemTypes.Add(BaseItemKind.Series);
+            if (config.UpdateSeasonsAndEpisodes)
+            {
+                itemTypes.Add(BaseItemKind.Season);
+                itemTypes.Add(BaseItemKind.Episode);
+            }
         }
 
         if (itemTypes.Count == 0)
@@ -91,11 +96,20 @@ public class UpdateFskRatingsTask : IScheduledTask
             _logger.LogInformation("FSK Rating Updater: no TMDb API key configured, running in normalization-only mode.");
         }
 
+        // Process parents before children so seasons/episodes can inherit a rating
+        // that was fixed up earlier in the same run.
         var items = _libraryManager.GetItemList(new InternalItemsQuery
         {
             IncludeItemTypes = itemTypes.ToArray(),
             Recursive = true
-        });
+        })
+            .OrderBy(i => i switch
+            {
+                Season => 1,
+                Episode => 2,
+                _ => 0
+            })
+            .ToList();
 
         _logger.LogInformation(
             "FSK Rating Updater: processing {Count} items (dry-run: {DryRun}, fallback: {Fallback}).",
@@ -194,11 +208,23 @@ public class UpdateFskRatingsTask : IScheduledTask
             return new RatingResult(normalized);
         }
 
-        // Step 3: fallback.
+        // Step 3: seasons/episodes inherit an already-valid FSK rating from their
+        // parent chain (episode -> season -> series) when nothing item-specific exists.
+        if (item is Season or Episode)
+        {
+            var inherited = TryInheritFromParents(item);
+            if (inherited is not null)
+            {
+                return new RatingResult(inherited);
+            }
+        }
+
+        // Step 4: fallback.
         switch (config.FallbackMode)
         {
             case FallbackMode.MapFromForeign:
-                var mapped = FskNormalizer.TryMapForeign(current);
+                var mapped = FskNormalizer.TryMapForeign(current)
+                    ?? (item is Season or Episode ? TryMapForeignFromParents(item) : null);
                 return mapped is not null ? new RatingResult(mapped) : RatingResult.Unresolved;
             case FallbackMode.ClearRating:
                 return string.IsNullOrEmpty(current) ? RatingResult.Unresolved : new RatingResult(null);
@@ -208,14 +234,70 @@ public class UpdateFskRatingsTask : IScheduledTask
         }
     }
 
+    private static IEnumerable<BaseItem> GetParentChain(BaseItem item)
+    {
+        switch (item)
+        {
+            case Episode episode:
+                if (episode.Season is not null)
+                {
+                    yield return episode.Season;
+                }
+
+                if (episode.Series is not null)
+                {
+                    yield return episode.Series;
+                }
+
+                break;
+            case Season season:
+                if (season.Series is not null)
+                {
+                    yield return season.Series;
+                }
+
+                break;
+        }
+    }
+
+    private static string? TryInheritFromParents(BaseItem item)
+    {
+        return GetParentChain(item)
+            .Select(parent => FskNormalizer.TryNormalize(parent.OfficialRating))
+            .FirstOrDefault(rating => rating is not null);
+    }
+
+    private static string? TryMapForeignFromParents(BaseItem item)
+    {
+        return GetParentChain(item)
+            .Select(parent => FskNormalizer.TryMapForeign(parent.OfficialRating))
+            .FirstOrDefault(rating => rating is not null);
+    }
+
     private async Task<string?> LookupTmdbAsync(BaseItem item, TmdbClient tmdbClient, CancellationToken cancellationToken)
     {
-        var isMovie = item is Movie;
-        var tmdbId = item.GetProviderId(MetadataProvider.Tmdb);
+        // TMDb only carries German certifications per movie/series, not per season or
+        // episode (an episode's own TMDb id would hit the wrong endpoint). Seasons and
+        // episodes therefore look up their parent series; the client cache keeps this
+        // at one request per series.
+        var lookupItem = item switch
+        {
+            Season season => (BaseItem?)season.Series,
+            Episode episode => episode.Series,
+            _ => item
+        };
+
+        if (lookupItem is null)
+        {
+            return null;
+        }
+
+        var isMovie = lookupItem is Movie;
+        var tmdbId = lookupItem.GetProviderId(MetadataProvider.Tmdb);
 
         if (string.IsNullOrEmpty(tmdbId))
         {
-            var imdbId = item.GetProviderId(MetadataProvider.Imdb);
+            var imdbId = lookupItem.GetProviderId(MetadataProvider.Imdb);
             if (string.IsNullOrEmpty(imdbId))
             {
                 return null;

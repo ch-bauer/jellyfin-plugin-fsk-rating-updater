@@ -1,6 +1,6 @@
 {
   "category": "Metadata",
-  "changelog": "Initial release: FSK normalization, TMDb German certification lookup, configurable fallback, dry-run mode.",
+  "changelog": "Seasons and episodes are now processed too: they use the series' German certification from TMDb and otherwise inherit the rating from their parent. New 'Also update seasons and episodes' setting.",
   "description": "Standardizes age ratings to the German FSK format (FSK-0/6/12/16/18) and fills in missing or foreign ratings using official German certifications from TMDb.",
   "guid": "b7c3f1e2-9a4d-4e8b-b0c6-2f5d8a913c47",
   "imageUrl": "https://raw.githubusercontent.com/ch-bauer/jellyfin-plugin-fsk-rating-updater/main/images/icon.png",
@@ -8,8 +8,8 @@
   "overview": "German FSK age ratings for the whole library.",
   "owner": "Christian",
   "targetAbi": "10.11.0.0",
-  "timestamp": "2026-07-12T00:00:00.000Z",
-  "version": "1.0.0.0",
+  "timestamp": "2026-07-19T00:00:00.000Z",
+  "version": "1.1.0.0",
   "status": "Active",
   "autoUpdate": false
 }
