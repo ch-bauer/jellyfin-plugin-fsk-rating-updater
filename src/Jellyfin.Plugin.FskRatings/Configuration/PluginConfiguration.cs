@@ -66,4 +66,15 @@ public class PluginConfiguration : BasePluginConfiguration
     /// Gets or sets the behavior for items without a determinable German rating.
     /// </summary>
     public FallbackMode FallbackMode { get; set; } = FallbackMode.KeepUnchanged;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether a Netflix-style FSK badge is shown
+    /// in the web client for a few seconds when playback starts.
+    /// </summary>
+    public bool EnablePlaybackOverlay { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets how long the playback overlay stays visible, in seconds (1-30).
+    /// </summary>
+    public int OverlayDurationSeconds { get; set; } = 5;
 }

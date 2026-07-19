@@ -3,14 +3,15 @@
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <RootNamespace>Jellyfin.Plugin.FskRatings</RootNamespace>
-    <AssemblyVersion>1.1.0.0</AssemblyVersion>
-    <FileVersion>1.1.0.0</FileVersion>
+    <AssemblyVersion>1.2.0.0</AssemblyVersion>
+    <FileVersion>1.2.0.0</FileVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Jellyfin.Controller" Version="10.11.3">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
@@ -22,6 +23,8 @@
   <ItemGroup>
     <None Remove="Configuration\configPage.html" />
     <EmbeddedResource Include="Configuration\configPage.html" />
+    <None Remove="Web\fskOverlay.js" />
+    <EmbeddedResource Include="Web\fskOverlay.js" />
   </ItemGroup>
 
 </Project>

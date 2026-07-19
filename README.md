@@ -34,6 +34,28 @@ Only the `OfficialRating` field is modified — no other metadata is touched.
 | Update movies / TV series | on | Which media types are processed. Seasons and episodes inherit the series rating. |
 | Re-fetch existing FSK | off | On: valid FSK values are re-fetched from TMDb too (overwrites manual corrections). |
 | Fallback | Keep unchanged | Behavior when no German rating can be determined (see above). |
+| FSK overlay at playback start | on | Netflix-style badge at the start of playback (see below). |
+| Overlay duration | 5 s | How long the badge stays visible (1–30 s). |
+
+## Playback overlay (Netflix style)
+
+Since v1.2.0.0 the plugin can fade in the FSK badge — colored square, "FSK 12",
+"Freigegeben ab 12 Jahren" — in the top-left corner for a few seconds when playback starts,
+just like Netflix. Items without a valid `FSK-n` rating show nothing.
+
+How it works: at server startup the plugin injects a small script tag into the web client's
+`index.html`; the script itself is served by the plugin. After installing/updating the plugin,
+**hard-refresh the browser once (Ctrl+F5)**. Toggling the option later takes effect on the next
+page reload, no server restart needed.
+
+Limitations:
+
+- **Web client only** — browsers and apps that embed the web UI. Native clients
+  (Android TV, native mobile players) cannot be reached by server plugins.
+- If Jellyfin's web directory is read-only (some Docker/snap setups), the automatic injection
+  fails with a warning in the server log. In that case add this line manually before `</head>`
+  in `jellyfin-web/index.html`:
+  `<script src="configurationpage?name=fskOverlay.js" defer></script>`
 
 ## Requirements
 

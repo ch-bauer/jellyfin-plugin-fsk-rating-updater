@@ -71,6 +71,20 @@
                     </select>
                 </div>
 
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label>
+                        <input is="emby-checkbox" type="checkbox" id="EnablePlaybackOverlay" />
+                        <span>Show FSK overlay at playback start (Netflix style)</span>
+                    </label>
+                    <div class="fieldDescription checkboxFieldDescription">
+                        Fades in the FSK badge for a few seconds when playback starts. Web client only (browser and apps that embed the web UI, not Android TV). After installing or updating the plugin, hard-refresh the browser (Ctrl+F5) once.
+                    </div>
+                </div>
+
+                <div class="inputContainer">
+                    <input is="emby-input" type="number" id="OverlayDurationSeconds" min="1" max="30" label="Overlay duration (seconds)" />
+                </div>
+
                 <div>
                     <button is="emby-button" type="submit" class="raised button-submit block emby-button">
                         <span>Save</span>
@@ -95,6 +109,8 @@
                         document.querySelector('#UpdateSeasonsAndEpisodes').checked = config.UpdateSeasonsAndEpisodes;
                         document.querySelector('#OverwriteExistingFsk').checked = config.OverwriteExistingFsk;
                         document.querySelector('#FallbackMode').value = config.FallbackMode || 'KeepUnchanged';
+                        document.querySelector('#EnablePlaybackOverlay').checked = config.EnablePlaybackOverlay;
+                        document.querySelector('#OverlayDurationSeconds').value = config.OverlayDurationSeconds || 5;
                         Dashboard.hideLoadingMsg();
                     });
                 });
@@ -111,6 +127,8 @@
                         config.UpdateSeasonsAndEpisodes = document.querySelector('#UpdateSeasonsAndEpisodes').checked;
                         config.OverwriteExistingFsk = document.querySelector('#OverwriteExistingFsk').checked;
                         config.FallbackMode = document.querySelector('#FallbackMode').value;
+                        config.EnablePlaybackOverlay = document.querySelector('#EnablePlaybackOverlay').checked;
+                        config.OverlayDurationSeconds = parseInt(document.querySelector('#OverlayDurationSeconds').value, 10) || 5;
                         ApiClient.updatePluginConfiguration(pluginId, config).then(function (result) {
                             Dashboard.processPluginConfigurationUpdateResult(result);
                         });
