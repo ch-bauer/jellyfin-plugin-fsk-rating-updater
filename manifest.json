@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/ch-bauer/jellyfin-plugin-fsk-rating-updater/main/images/icon.png",
     "versions": [
       {
+        "version": "1.2.3.0",
+        "changelog": "The FSK overlay is smaller and now scales with the screen size (viewport-relative sizing with sensible min/max bounds).",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/ch-bauer/jellyfin-plugin-fsk-rating-updater/releases/download/v1.2.3.0/fsk-rating-updater_1.2.3.0.zip",
+        "checksum": "bd01af9d87cefc0289eab27b7bb421ab",
+        "timestamp": "2026-07-19T00:00:00Z"
+      },
+      {
         "version": "1.2.2.0",
         "changelog": "Overlay injection now integrates with the File Transformation plugin when installed (like Intro Skipper); the request-time middleware remains as automatic fallback.",
         "targetAbi": "10.11.0.0",
