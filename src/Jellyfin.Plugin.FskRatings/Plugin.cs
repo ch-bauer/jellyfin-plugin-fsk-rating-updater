@@ -3,7 +3,6 @@ using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Plugins;
 using MediaBrowser.Model.Serialization;
-using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.FskRatings;
 
@@ -17,12 +16,10 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     /// </summary>
     /// <param name="applicationPaths">Instance of the <see cref="IApplicationPaths"/> interface.</param>
     /// <param name="xmlSerializer">Instance of the <see cref="IXmlSerializer"/> interface.</param>
-    /// <param name="logger">Instance of the <see cref="ILogger{Plugin}"/> interface.</param>
-    public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, ILogger<Plugin> logger)
+    public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer)
         : base(applicationPaths, xmlSerializer)
     {
         Instance = this;
-        InjectOverlayScript(applicationPaths, logger);
     }
 
     /// <inheritdoc />
@@ -62,42 +59,5 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
                     GetType().Namespace)
             }
         };
-    }
-
-    private static void InjectOverlayScript(IApplicationPaths applicationPaths, ILogger<Plugin> logger)
-    {
-        var webPath = applicationPaths.WebPath;
-        if (string.IsNullOrEmpty(webPath))
-        {
-            return;
-        }
-
-        var indexPath = Path.Join(webPath, "index.html");
-        try
-        {
-            if (!File.Exists(indexPath))
-            {
-                logger.LogWarning("Web client index.html not found at {Path}; the FSK playback overlay will not be available.", indexPath);
-                return;
-            }
-
-            var contents = File.ReadAllText(indexPath);
-            var updated = Web.OverlayScriptInjector.AddScriptTag(contents);
-            if (updated is null)
-            {
-                return;
-            }
-
-            File.WriteAllText(indexPath, updated);
-            logger.LogInformation("FSK playback overlay script injected into {Path}.", indexPath);
-        }
-        catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
-        {
-            logger.LogWarning(
-                ex,
-                "Could not inject the FSK playback overlay script into {Path} (web directory may be read-only). To use the overlay, add this tag manually before </head>: {Tag}",
-                indexPath,
-                Web.OverlayScriptInjector.ScriptTag);
-        }
     }
 }

@@ -43,19 +43,14 @@ Since v1.2.0.0 the plugin can fade in the FSK badge — colored square, "FSK 12"
 "Freigegeben ab 12 Jahren" — in the top-left corner for a few seconds when playback starts,
 just like Netflix. Items without a valid `FSK-n` rating show nothing.
 
-How it works: at server startup the plugin injects a small script tag into the web client's
-`index.html`; the script itself is served by the plugin. After installing/updating the plugin,
-**hard-refresh the browser once (Ctrl+F5)**. Toggling the option later takes effect on the next
-page reload, no server restart needed.
+How it works: the plugin injects a small script tag into the web client's `index.html`
+at request time (ASP.NET middleware) — nothing on disk is modified, so it also works when
+the web directory is read-only (Linux packages, Docker). The script itself is served by the
+plugin. After installing/updating the plugin, **hard-refresh the browser once (Ctrl+F5)**.
+Toggling the option later takes effect on the next page reload, no server restart needed.
 
-Limitations:
-
-- **Web client only** — browsers and apps that embed the web UI. Native clients
-  (Android TV, native mobile players) cannot be reached by server plugins.
-- If Jellyfin's web directory is read-only (some Docker/snap setups), the automatic injection
-  fails with a warning in the server log. In that case add this line manually before `</head>`
-  in `jellyfin-web/index.html`:
-  `<script src="configurationpage?name=fskOverlay.js" defer></script>`
+Limitation: **web client only** — browsers and apps that embed the web UI. Native clients
+(Android TV, native mobile players) cannot be reached by server plugins.
 
 ## Requirements
 
