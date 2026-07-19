@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/ch-bauer/jellyfin-plugin-fsk-rating-updater/main/images/icon.png",
     "versions": [
       {
+        "version": "1.1.0.0",
+        "changelog": "Seasons and episodes are now processed too: they use the series' German certification from TMDb and otherwise inherit the rating from their parent. New 'Also update seasons and episodes' setting.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/ch-bauer/jellyfin-plugin-fsk-rating-updater/releases/download/v1.1.0.0/fsk-rating-updater_1.1.0.0.zip",
+        "checksum": "3d15c7020dbd8e0ca4f6ac92e779b54a",
+        "timestamp": "2026-07-19T00:00:00Z"
+      },
+      {
         "version": "1.0.0.0",
         "changelog": "Initial release: FSK normalization, TMDb German certification lookup, configurable fallback, dry-run mode.",
         "targetAbi": "10.11.0.0",
