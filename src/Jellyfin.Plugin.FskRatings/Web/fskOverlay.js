@@ -45,17 +45,19 @@
             '  display: flex; align-items: center; pointer-events: none;' +
             '  opacity: 0; transition: opacity 0.6s ease;' +
             '  font-family: inherit;' +
+            // Scale the whole overlay with the viewport: all inner sizes are em-based.
+            '  font-size: clamp(10px, 1.1vw, 16px);' +
             '}' +
             '#' + OVERLAY_ID + '.fskVisible { opacity: 1; }' +
             '#' + OVERLAY_ID + ' .fskSquare {' +
-            '  width: 3.4em; height: 3.4em; border-radius: 0.25em;' +
+            '  width: 2.6em; height: 2.6em; border-radius: 0.25em;' +
             '  display: flex; align-items: center; justify-content: center;' +
-            '  font-size: 1.4em; font-weight: 700;' +
+            '  font-size: 1.25em; font-weight: 700;' +
             '  box-shadow: 0 0.1em 0.6em rgba(0, 0, 0, 0.5);' +
             '}' +
-            '#' + OVERLAY_ID + ' .fskText { margin-left: 1em; color: #ffffff; text-shadow: 0 0.05em 0.4em rgba(0, 0, 0, 0.8); }' +
-            '#' + OVERLAY_ID + ' .fskTitle { font-size: 1.6em; font-weight: 700; line-height: 1.2; }' +
-            '#' + OVERLAY_ID + ' .fskSubtitle { font-size: 1em; opacity: 0.9; }';
+            '#' + OVERLAY_ID + ' .fskText { margin-left: 0.8em; color: #ffffff; text-shadow: 0 0.05em 0.4em rgba(0, 0, 0, 0.8); }' +
+            '#' + OVERLAY_ID + ' .fskTitle { font-size: 1.25em; font-weight: 700; line-height: 1.2; }' +
+            '#' + OVERLAY_ID + ' .fskSubtitle { font-size: 0.85em; opacity: 0.9; }';
         document.head.appendChild(style);
     }
 
