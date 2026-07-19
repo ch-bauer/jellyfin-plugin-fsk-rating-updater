@@ -28,6 +28,7 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           mkdir package
           cp publish/Jellyfin.Plugin.FskRatings.dll package/
+          cp publish/Newtonsoft.Json.dll package/
           cp meta.json package/
           (cd package && zip "../fsk-rating-updater_${VERSION}.zip" ./*)
           echo "MD5 checksum for manifest.json:"

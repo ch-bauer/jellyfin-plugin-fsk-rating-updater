@@ -14,8 +14,13 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
     /// <inheritdoc />
     public void RegisterServices(IServiceCollection serviceCollection, IServerApplicationHost applicationHost)
     {
-        // Request-time injection of the FSK overlay script into the web client's
-        // index.html; works even when the web directory on disk is read-only.
+        // Preferred: register the overlay injection with the File Transformation
+        // plugin when installed (same mechanism as Intro Skipper).
+        serviceCollection.AddHostedService<FileTransformationRegistration>();
+
+        // Fallback: request-time injection of the FSK overlay script into the web
+        // client's index.html; works even when the web directory on disk is
+        // read-only. Stands down when File Transformation handles the injection.
         serviceCollection.AddSingleton<IStartupFilter, OverlayInjectionStartupFilter>();
     }
 }

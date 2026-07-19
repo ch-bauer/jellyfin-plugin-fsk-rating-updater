@@ -43,11 +43,14 @@ Since v1.2.0.0 the plugin can fade in the FSK badge — colored square, "FSK 12"
 "Freigegeben ab 12 Jahren" — in the top-left corner for a few seconds when playback starts,
 just like Netflix. Items without a valid `FSK-n` rating show nothing.
 
-How it works: the plugin injects a small script tag into the web client's `index.html`
-at request time (ASP.NET middleware) — nothing on disk is modified, so it also works when
-the web directory is read-only (Linux packages, Docker). The script itself is served by the
-plugin. After installing/updating the plugin, **hard-refresh the browser once (Ctrl+F5)**.
-Toggling the option later takes effect on the next page reload, no server restart needed.
+How it works: the plugin injects a small script tag into the web client's `index.html` —
+nothing on disk is modified, so it also works when the web directory is read-only (Linux
+packages, Docker). When the [File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation)
+plugin is installed, the injection is registered there (the same mechanism Intro Skipper
+uses); otherwise a built-in request-time middleware does the same thing — no extra plugin
+required. The script itself is served by the plugin. After installing/updating the plugin,
+**hard-refresh the browser once (Ctrl+F5)**. Toggling the option later takes effect on the
+next page reload, no server restart needed.
 
 Limitation: **web client only** — browsers and apps that embed the web UI. Native clients
 (Android TV, native mobile players) cannot be reached by server plugins.

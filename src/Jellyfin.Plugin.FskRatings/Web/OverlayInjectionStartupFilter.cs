@@ -55,8 +55,11 @@ public class OverlayInjectionStartupFilter : IStartupFilter
 
     private async Task InvokeAsync(HttpContext context, Func<Task> next)
     {
-        // Only GET produces a body that can be rewritten; other methods pass through.
-        if (!IsIndexRequest(context.Request.Path.Value) || !HttpMethods.IsGet(context.Request.Method))
+        // When the File Transformation plugin handles the injection, this middleware
+        // stands down entirely. Only GET produces a body that can be rewritten.
+        if (FileTransformationRegistration.Registered
+            || !IsIndexRequest(context.Request.Path.Value)
+            || !HttpMethods.IsGet(context.Request.Method))
         {
             await next().ConfigureAwait(false);
             return;

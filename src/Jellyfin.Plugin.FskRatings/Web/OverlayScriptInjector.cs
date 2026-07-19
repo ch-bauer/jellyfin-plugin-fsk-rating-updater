@@ -32,4 +32,22 @@ public static class OverlayScriptInjector
 
         return html.Insert(headEnd, ScriptTag);
     }
+
+    /// <summary>
+    /// Transformation callback invoked by the File Transformation plugin for index.html.
+    /// Must stay public, static and string-returning — it is resolved by name via reflection.
+    /// </summary>
+    /// <param name="payload">The payload containing the current file contents.</param>
+    /// <returns>The transformed contents (unchanged when the tag is already present).</returns>
+    public static string TransformIndexHtml(TransformationPayload payload)
+    {
+        ArgumentNullException.ThrowIfNull(payload);
+        var contents = payload.Contents ?? string.Empty;
+        if (string.IsNullOrEmpty(contents))
+        {
+            return contents;
+        }
+
+        return AddScriptTag(contents) ?? contents;
+    }
 }

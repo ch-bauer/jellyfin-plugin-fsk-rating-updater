@@ -38,4 +38,20 @@ public class OverlayScriptInjectionTests
     {
         Assert.Null(OverlayScriptInjector.AddScriptTag("<html><body></body></html>"));
     }
+
+    [Fact]
+    public void TransformIndexHtml_InjectsTag()
+    {
+        var payload = new TransformationPayload { Contents = "<html><head></head><body></body></html>" };
+        var result = OverlayScriptInjector.TransformIndexHtml(payload);
+        Assert.Contains(OverlayScriptInjector.ScriptTag, result, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TransformIndexHtml_ReturnsUnchangedWhenTagPresentOrEmpty()
+    {
+        var withTag = "<html><head>" + OverlayScriptInjector.ScriptTag + "</head></html>";
+        Assert.Equal(withTag, OverlayScriptInjector.TransformIndexHtml(new TransformationPayload { Contents = withTag }));
+        Assert.Equal(string.Empty, OverlayScriptInjector.TransformIndexHtml(new TransformationPayload { Contents = null }));
+    }
 }
