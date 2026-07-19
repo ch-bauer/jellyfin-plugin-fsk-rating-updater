@@ -13,7 +13,7 @@
         "changelog": "Overlay injection now integrates with the File Transformation plugin when installed (like Intro Skipper); the request-time middleware remains as automatic fallback.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/ch-bauer/jellyfin-plugin-fsk-rating-updater/releases/download/v1.2.2.0/fsk-rating-updater_1.2.2.0.zip",
-        "checksum": "TBD",
+        "checksum": "cfaf3c116403f385bcc3ce23e3e74e06",
         "timestamp": "2026-07-19T00:00:00Z"
       },
       {
