@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/ch-bauer/jellyfin-plugin-fsk-rating-updater/main/images/icon.png",
     "versions": [
       {
+        "version": "1.2.5.0",
+        "changelog": "Age-gate ratings like \"12+\" or \"16+\" are now recognized and normalized to FSK-12 / FSK-16 (previously left unchanged).",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/ch-bauer/jellyfin-plugin-fsk-rating-updater/releases/download/v1.2.5.0/fsk-rating-updater_1.2.5.0.zip",
+        "checksum": "575457c7750a88d139780fc4cd3fb2c1",
+        "timestamp": "2026-07-22T00:00:00Z"
+      },
+      {
         "version": "1.2.4.0",
         "changelog": "You can now restrict the task to specific libraries in the plugin settings. When no libraries are selected, every library is processed as before.",
         "targetAbi": "10.11.0.0",
