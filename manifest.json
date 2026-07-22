@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/ch-bauer/jellyfin-plugin-fsk-rating-updater/main/images/icon.png",
     "versions": [
       {
+        "version": "1.2.4.0",
+        "changelog": "You can now restrict the task to specific libraries in the plugin settings. When no libraries are selected, every library is processed as before.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/ch-bauer/jellyfin-plugin-fsk-rating-updater/releases/download/v1.2.4.0/fsk-rating-updater_1.2.4.0.zip",
+        "checksum": "642f2f623ef9e3a0f9472794d8224c60",
+        "timestamp": "2026-07-22T00:00:00Z"
+      },
+      {
         "version": "1.2.3.0",
         "changelog": "The FSK overlay is smaller and now scales with the screen size (viewport-relative sizing with sensible min/max bounds).",
         "targetAbi": "10.11.0.0",
