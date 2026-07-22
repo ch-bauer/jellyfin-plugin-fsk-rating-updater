@@ -11,18 +11,21 @@ public static partial class FskNormalizer
 {
     private static readonly int[] ValidFskLevels = [0, 6, 12, 16, 18];
 
-    [GeneratedRegex(@"^\s*(?:FSK|DE)\s*[-:/ ]?\s*(\d{1,2})\s*$", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"^\s*(?:FSK|DE)\s*[-:/ ]?\s*(\d{1,2})\s*\+?\s*$", RegexOptions.IgnoreCase)]
     private static partial Regex FskStyleRegex();
 
     [GeneratedRegex(@"^\s*ab\s+(\d{1,2})(?:\s+Jahren?)?\s*$", RegexOptions.IgnoreCase)]
     private static partial Regex AbJahrenRegex();
 
-    [GeneratedRegex(@"^\s*(\d{1,2})\s*$")]
+    // Accepts a trailing "+" ("12+", "16+"), the age-gate form used by Amazon and
+    // various streaming scrapers. The ValidFskLevels check below still rejects
+    // numbers that are not real FSK levels (e.g. "7+", "13+").
+    [GeneratedRegex(@"^\s*(\d{1,2})\s*\+?\s*$")]
     private static partial Regex BareNumberRegex();
 
     /// <summary>
     /// Tries to interpret <paramref name="rating"/> as a German (FSK-style) rating and
-    /// returns the canonical form, e.g. "FSK 12" / "fsk12" / "DE-12" / "12" → "FSK-12".
+    /// returns the canonical form, e.g. "FSK 12" / "fsk12" / "DE-12" / "12" / "12+" → "FSK-12".
     /// Returns null when the value is not recognizably German.
     /// </summary>
     /// <param name="rating">The raw rating string.</param>

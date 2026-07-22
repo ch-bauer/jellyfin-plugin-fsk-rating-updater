@@ -19,6 +19,11 @@ public class FskNormalizerTests
     [InlineData("0", "FSK-0")]
     [InlineData("18", "FSK-18")]
     [InlineData(" 16 ", "FSK-16")]
+    [InlineData("12+", "FSK-12")]
+    [InlineData("6+", "FSK-6")]
+    [InlineData("0+", "FSK-0")]
+    [InlineData("18 +", "FSK-18")]
+    [InlineData("FSK 16+", "FSK-16")]
     [InlineData("ab 12", "FSK-12")]
     [InlineData("ab 12 Jahren", "FSK-12")]
     [InlineData("Ab 6 Jahren", "FSK-6")]
@@ -40,6 +45,8 @@ public class FskNormalizerTests
     [InlineData("TV-MA")]
     [InlineData("FSK-13")] // not a valid FSK level
     [InlineData("7")] // not a valid FSK level
+    [InlineData("7+")] // not a valid FSK level
+    [InlineData("13+")] // not a valid FSK level
     [InlineData("FSK 21")]
     [InlineData("Not Rated")]
     [InlineData("ab morgen")]
