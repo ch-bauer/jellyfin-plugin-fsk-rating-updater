@@ -70,6 +70,14 @@ public class PluginConfiguration : BasePluginConfiguration
     public bool OverwriteExistingFsk { get; set; } = false;
 
     /// <summary>
+    /// Gets or sets a value indicating whether, when TMDb has no German (DE)
+    /// certification, a purely numeric age-gate rating from another country
+    /// (e.g. Russian/Nordic "12+") is accepted and mapped to the matching FSK level.
+    /// Only values that map onto a valid FSK level (0/6/12/16/18) are used.
+    /// </summary>
+    public bool UseForeignAgeRatingFallback { get; set; } = true;
+
+    /// <summary>
     /// Gets or sets the behavior for items without a determinable German rating.
     /// </summary>
     public FallbackMode FallbackMode { get; set; } = FallbackMode.KeepUnchanged;

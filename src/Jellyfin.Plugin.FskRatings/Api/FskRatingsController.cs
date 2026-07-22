@@ -1,7 +1,9 @@
+using Jellyfin.Plugin.FskRatings.Tmdb;
 using MediaBrowser.Controller.Library;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.FskRatings.Api;
 
@@ -13,14 +15,23 @@ namespace Jellyfin.Plugin.FskRatings.Api;
 public class FskRatingsController : ControllerBase
 {
     private readonly ILibraryManager _libraryManager;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILogger<FskRatingsController> _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FskRatingsController"/> class.
     /// </summary>
     /// <param name="libraryManager">The library manager.</param>
-    public FskRatingsController(ILibraryManager libraryManager)
+    /// <param name="httpClientFactory">The HTTP client factory.</param>
+    /// <param name="logger">The logger.</param>
+    public FskRatingsController(
+        ILibraryManager libraryManager,
+        IHttpClientFactory httpClientFactory,
+        ILogger<FskRatingsController> logger)
     {
         _libraryManager = libraryManager;
+        _httpClientFactory = httpClientFactory;
+        _logger = logger;
     }
 
     /// <summary>
@@ -42,6 +53,44 @@ public class FskRatingsController : ControllerBase
             })
             .OrderBy(library => library.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
+    }
+
+    /// <summary>
+    /// Tests whether a TMDb API key is accepted by TMDb. The key is taken from the
+    /// request body so the (possibly unsaved) value from the settings form can be
+    /// checked. Admin-only.
+    /// </summary>
+    /// <param name="request">The key to test.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The test result.</returns>
+    [HttpPost("TestApiKey")]
+    [Authorize(Policy = "RequiresElevation")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult<TestApiKeyResultDto>> TestApiKey(
+        [FromBody] TestApiKeyRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        var apiKey = request?.ApiKey?.Trim();
+        if (string.IsNullOrEmpty(apiKey))
+        {
+            return new TestApiKeyResultDto { Success = false, Message = "No API key entered." };
+        }
+
+        try
+        {
+            var client = new TmdbClient(_httpClientFactory, _logger, apiKey);
+            var valid = await client.ValidateApiKeyAsync(cancellationToken).ConfigureAwait(false);
+            return new TestApiKeyResultDto
+            {
+                Success = valid,
+                Message = valid ? "API key is valid." : "TMDb rejected this API key."
+            };
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            _logger.LogWarning(ex, "TMDb API key test failed to reach TMDb.");
+            return new TestApiKeyResultDto { Success = false, Message = "Could not reach TMDb. Check the server's internet connection." };
+        }
     }
 
     /// <summary>
@@ -83,6 +132,33 @@ public class LibraryDto
     /// Gets or sets the collection type (e.g. movies, tvshows), if any.
     /// </summary>
     public string? CollectionType { get; set; }
+}
+
+/// <summary>
+/// Request body for the TMDb API key test.
+/// </summary>
+public class TestApiKeyRequestDto
+{
+    /// <summary>
+    /// Gets or sets the API key to test.
+    /// </summary>
+    public string? ApiKey { get; set; }
+}
+
+/// <summary>
+/// Result of a TMDb API key test.
+/// </summary>
+public class TestApiKeyResultDto
+{
+    /// <summary>
+    /// Gets or sets a value indicating whether the key was accepted.
+    /// </summary>
+    public bool Success { get; set; }
+
+    /// <summary>
+    /// Gets or sets a human-readable result message.
+    /// </summary>
+    public string Message { get; set; } = string.Empty;
 }
 
 /// <summary>

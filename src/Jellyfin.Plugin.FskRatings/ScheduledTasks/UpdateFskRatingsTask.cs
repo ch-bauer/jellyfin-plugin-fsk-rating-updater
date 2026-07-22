@@ -209,7 +209,7 @@ public class UpdateFskRatingsTask : IScheduledTask
         // Step 2: TMDb lookup.
         if (tmdbClient is not null)
         {
-            var fromTmdb = await LookupTmdbAsync(item, tmdbClient, cancellationToken).ConfigureAwait(false);
+            var fromTmdb = await LookupTmdbAsync(item, config, tmdbClient, cancellationToken).ConfigureAwait(false);
             if (fromTmdb is not null)
             {
                 return new RatingResult(fromTmdb);
@@ -288,7 +288,7 @@ public class UpdateFskRatingsTask : IScheduledTask
             .FirstOrDefault(rating => rating is not null);
     }
 
-    private async Task<string?> LookupTmdbAsync(BaseItem item, TmdbClient tmdbClient, CancellationToken cancellationToken)
+    private async Task<string?> LookupTmdbAsync(BaseItem item, PluginConfiguration config, TmdbClient tmdbClient, CancellationToken cancellationToken)
     {
         // TMDb only carries German certifications per movie/series, not per season or
         // episode (an episode's own TMDb id would hit the wrong endpoint). Seasons and
@@ -333,7 +333,38 @@ public class UpdateFskRatingsTask : IScheduledTask
 
         // TMDb returns German certifications as bare numbers ("12"); normalize handles
         // both that and already-prefixed values defensively.
-        return FskNormalizer.TryNormalize(certification);
+        var normalized = FskNormalizer.TryNormalize(certification);
+        if (normalized is not null)
+        {
+            return normalized;
+        }
+
+        // Optional fallback: no German certification exists, so try a numeric age-gate
+        // rating from another country (e.g. Russian/Nordic "12+"). Only values that map
+        // cleanly onto a valid FSK level are accepted; foreign letter systems (PG-13, R)
+        // and non-FSK numbers ("7+", "13+") are ignored.
+        if (config.UseForeignAgeRatingFallback)
+        {
+            var foreignCertifications = isMovie
+                ? await tmdbClient.GetMovieForeignCertificationsAsync(tmdbId, cancellationToken).ConfigureAwait(false)
+                : await tmdbClient.GetSeriesForeignCertificationsAsync(tmdbId, cancellationToken).ConfigureAwait(false);
+
+            foreach (var candidate in foreignCertifications)
+            {
+                var mapped = FskNormalizer.TryNormalize(candidate);
+                if (mapped is not null)
+                {
+                    _logger.LogInformation(
+                        "{Name}: no German TMDb certification; using foreign age rating '{Foreign}' -> {Fsk}.",
+                        item.Name,
+                        candidate,
+                        mapped);
+                    return mapped;
+                }
+            }
+        }
+
+        return null;
     }
 
     private readonly record struct RatingResult(string? Value, bool Resolved = true)

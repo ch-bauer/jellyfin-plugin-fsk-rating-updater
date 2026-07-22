@@ -1,6 +1,6 @@
 {
   "category": "Metadata",
-  "changelog": "Age-gate ratings like \"12+\" or \"16+\" are now recognized and normalized to FSK-12 / FSK-16 (previously left unchanged).",
+  "changelog": "New: optional fallback to a foreign numeric age rating from TMDb (e.g. Russian/Nordic \"12+\") when no German certification exists, and a 'Test API key' button in the settings.",
   "description": "Standardizes age ratings to the German FSK format (FSK-0/6/12/16/18) and fills in missing or foreign ratings using official German certifications from TMDb.",
   "guid": "b7c3f1e2-9a4d-4e8b-b0c6-2f5d8a913c47",
   "imageUrl": "https://raw.githubusercontent.com/ch-bauer/jellyfin-plugin-fsk-rating-updater/main/images/icon.png",
@@ -9,7 +9,7 @@
   "owner": "Christian",
   "targetAbi": "10.11.0.0",
   "timestamp": "2026-07-19T00:00:00.000Z",
-  "version": "1.2.5.0",
+  "version": "1.2.6.0",
   "status": "Active",
   "autoUpdate": false
 }

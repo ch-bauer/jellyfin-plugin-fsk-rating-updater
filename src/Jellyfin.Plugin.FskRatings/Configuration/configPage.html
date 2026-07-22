@@ -17,6 +17,10 @@
                     <div class="fieldDescription">
                         Free key from themoviedb.org (Settings &rarr; API). Leave empty to only normalize existing ratings without any online lookups.
                     </div>
+                    <button is="emby-button" type="button" id="TestApiKey" class="raised block emby-button" style="margin-top:0.5em;">
+                        <span>Test API key</span>
+                    </button>
+                    <div id="TestApiKeyResult" class="fieldDescription" style="margin-top:0.4em;"></div>
                 </div>
 
                 <div class="checkboxContainer checkboxContainer-withDescription">
@@ -68,6 +72,16 @@
                     </label>
                     <div class="fieldDescription checkboxFieldDescription">
                         When off, an existing FSK rating is only reformatted (e.g. "FSK 12" &rarr; "FSK-12"). When on, TMDb is asked again and may overwrite it.
+                    </div>
+                </div>
+
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label>
+                        <input is="emby-checkbox" type="checkbox" id="UseForeignAgeRatingFallback" />
+                        <span>Use a foreign age rating when TMDb has no German one</span>
+                    </label>
+                    <div class="fieldDescription checkboxFieldDescription">
+                        When TMDb has no German (FSK) certification but another country lists a numeric age rating (e.g. Russian/Nordic "12+"), map it to the matching FSK level. Only values that line up with a valid FSK level (0/6/12/16/18) are used; foreign letter ratings (PG-13, R) are ignored here.
                     </div>
                 </div>
 
@@ -141,6 +155,33 @@
                     function (checkbox) { return checkbox.value; });
             }
 
+            document.querySelector('#TestApiKey')
+                .addEventListener('click', function () {
+                    var resultEl = document.querySelector('#TestApiKeyResult');
+                    var apiKey = document.querySelector('#TmdbApiKey').value.trim();
+                    if (!apiKey) {
+                        resultEl.style.color = '';
+                        resultEl.textContent = 'Enter an API key first.';
+                        return;
+                    }
+
+                    resultEl.style.color = '';
+                    resultEl.textContent = 'Testing…';
+                    ApiClient.ajax({
+                        type: 'POST',
+                        url: ApiClient.getUrl('FskRatings/TestApiKey'),
+                        contentType: 'application/json',
+                        data: JSON.stringify({ ApiKey: apiKey }),
+                        dataType: 'json'
+                    }).then(function (result) {
+                        resultEl.style.color = result.Success ? 'green' : 'red';
+                        resultEl.textContent = result.Message;
+                    }, function () {
+                        resultEl.style.color = 'red';
+                        resultEl.textContent = 'The test request failed.';
+                    });
+                });
+
             document.querySelector('#FskRatingsConfigPage')
                 .addEventListener('pageshow', function () {
                     Dashboard.showLoadingMsg();
@@ -161,6 +202,7 @@
                         document.querySelector('#UpdateSeries').checked = config.UpdateSeries;
                         document.querySelector('#UpdateSeasonsAndEpisodes').checked = config.UpdateSeasonsAndEpisodes;
                         document.querySelector('#OverwriteExistingFsk').checked = config.OverwriteExistingFsk;
+                        document.querySelector('#UseForeignAgeRatingFallback').checked = config.UseForeignAgeRatingFallback;
                         document.querySelector('#FallbackMode').value = config.FallbackMode || 'KeepUnchanged';
                         document.querySelector('#EnablePlaybackOverlay').checked = config.EnablePlaybackOverlay;
                         document.querySelector('#OverlayDurationSeconds').value = config.OverlayDurationSeconds || 5;
@@ -180,6 +222,7 @@
                         config.UpdateSeries = document.querySelector('#UpdateSeries').checked;
                         config.UpdateSeasonsAndEpisodes = document.querySelector('#UpdateSeasonsAndEpisodes').checked;
                         config.OverwriteExistingFsk = document.querySelector('#OverwriteExistingFsk').checked;
+                        config.UseForeignAgeRatingFallback = document.querySelector('#UseForeignAgeRatingFallback').checked;
                         config.FallbackMode = document.querySelector('#FallbackMode').value;
                         config.EnablePlaybackOverlay = document.querySelector('#EnablePlaybackOverlay').checked;
                         config.OverlayDurationSeconds = parseInt(document.querySelector('#OverlayDurationSeconds').value, 10) || 5;

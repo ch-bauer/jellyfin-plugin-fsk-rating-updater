@@ -16,7 +16,8 @@ public class TmdbClient
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger _logger;
     private readonly string _apiKey;
-    private readonly Dictionary<string, string?> _cache = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, IReadOnlyList<CountryCertification>> _movieCache = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, IReadOnlyList<CountryCertification>> _tvCache = new(StringComparer.Ordinal);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TmdbClient"/> class.
@@ -39,28 +40,21 @@ public class TmdbClient
     /// <returns>The certification string or null.</returns>
     public async Task<string?> GetMovieGermanCertificationAsync(string tmdbId, CancellationToken cancellationToken)
     {
-        var cacheKey = "movie:" + tmdbId;
-        if (_cache.TryGetValue(cacheKey, out var cached))
-        {
-            return cached;
-        }
+        var certifications = await GetMovieCertificationsAsync(tmdbId, cancellationToken).ConfigureAwait(false);
+        return PickCountry(certifications, "DE");
+    }
 
-        var response = await GetAsync<ReleaseDatesResponse>(
-            $"{BaseUrl}/movie/{tmdbId}/release_dates?api_key={_apiKey}",
-            cancellationToken).ConfigureAwait(false);
-
-        var germanEntry = response?.Results?.FirstOrDefault(r =>
-            string.Equals(r.CountryCode, "DE", StringComparison.OrdinalIgnoreCase));
-
-        // Prefer the theatrical release certification (type 3), fall back to any non-empty one.
-        var certification = germanEntry?.ReleaseDates?
-            .Where(d => !string.IsNullOrWhiteSpace(d.Certification))
-            .OrderBy(d => d.Type == 3 ? 0 : 1)
-            .Select(d => d.Certification!.Trim())
-            .FirstOrDefault();
-
-        _cache[cacheKey] = certification;
-        return certification;
+    /// <summary>
+    /// Gets the certifications a movie carries in countries other than Germany (best
+    /// entry per country). Used for the optional foreign age-rating fallback.
+    /// </summary>
+    /// <param name="tmdbId">The TMDb movie id.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The non-German certification strings.</returns>
+    public async Task<IReadOnlyList<string>> GetMovieForeignCertificationsAsync(string tmdbId, CancellationToken cancellationToken)
+    {
+        var certifications = await GetMovieCertificationsAsync(tmdbId, cancellationToken).ConfigureAwait(false);
+        return PickForeign(certifications);
     }
 
     /// <summary>
@@ -71,8 +65,76 @@ public class TmdbClient
     /// <returns>The rating string or null.</returns>
     public async Task<string?> GetSeriesGermanCertificationAsync(string tmdbId, CancellationToken cancellationToken)
     {
-        var cacheKey = "tv:" + tmdbId;
-        if (_cache.TryGetValue(cacheKey, out var cached))
+        var certifications = await GetSeriesCertificationsAsync(tmdbId, cancellationToken).ConfigureAwait(false);
+        return PickCountry(certifications, "DE");
+    }
+
+    /// <summary>
+    /// Gets the content ratings a series carries in countries other than Germany. Used
+    /// for the optional foreign age-rating fallback.
+    /// </summary>
+    /// <param name="tmdbId">The TMDb series id.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The non-German rating strings.</returns>
+    public async Task<IReadOnlyList<string>> GetSeriesForeignCertificationsAsync(string tmdbId, CancellationToken cancellationToken)
+    {
+        var certifications = await GetSeriesCertificationsAsync(tmdbId, cancellationToken).ConfigureAwait(false);
+        return PickForeign(certifications);
+    }
+
+    /// <summary>
+    /// Verifies that the configured API key is accepted by TMDb.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>True when TMDb accepts the key.</returns>
+    public async Task<bool> ValidateApiKeyAsync(CancellationToken cancellationToken)
+    {
+        var client = _httpClientFactory.CreateClient(NamedClient.Default);
+        using var response = await client
+            .GetAsync(new Uri($"{BaseUrl}/authentication?api_key={_apiKey}"), cancellationToken)
+            .ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    private async Task<IReadOnlyList<CountryCertification>> GetMovieCertificationsAsync(string tmdbId, CancellationToken cancellationToken)
+    {
+        if (_movieCache.TryGetValue(tmdbId, out var cached))
+        {
+            return cached;
+        }
+
+        var response = await GetAsync<ReleaseDatesResponse>(
+            $"{BaseUrl}/movie/{tmdbId}/release_dates?api_key={_apiKey}",
+            cancellationToken).ConfigureAwait(false);
+
+        var list = new List<CountryCertification>();
+        foreach (var result in response?.Results ?? Enumerable.Empty<ReleaseDatesResult>())
+        {
+            if (string.IsNullOrWhiteSpace(result.CountryCode))
+            {
+                continue;
+            }
+
+            // Prefer the theatrical release certification (type 3), fall back to any non-empty one.
+            var certification = result.ReleaseDates?
+                .Where(d => !string.IsNullOrWhiteSpace(d.Certification))
+                .OrderBy(d => d.Type == 3 ? 0 : 1)
+                .Select(d => d.Certification!.Trim())
+                .FirstOrDefault();
+
+            if (!string.IsNullOrWhiteSpace(certification))
+            {
+                list.Add(new CountryCertification(result.CountryCode!.Trim(), certification));
+            }
+        }
+
+        _movieCache[tmdbId] = list;
+        return list;
+    }
+
+    private async Task<IReadOnlyList<CountryCertification>> GetSeriesCertificationsAsync(string tmdbId, CancellationToken cancellationToken)
+    {
+        if (_tvCache.TryGetValue(tmdbId, out var cached))
         {
             return cached;
         }
@@ -81,13 +143,33 @@ public class TmdbClient
             $"{BaseUrl}/tv/{tmdbId}/content_ratings?api_key={_apiKey}",
             cancellationToken).ConfigureAwait(false);
 
-        var rating = response?.Results?
-            .FirstOrDefault(r => string.Equals(r.CountryCode, "DE", StringComparison.OrdinalIgnoreCase)
-                && !string.IsNullOrWhiteSpace(r.Rating))?
-            .Rating?.Trim();
+        var list = new List<CountryCertification>();
+        foreach (var result in response?.Results ?? Enumerable.Empty<ContentRatingResult>())
+        {
+            if (!string.IsNullOrWhiteSpace(result.CountryCode) && !string.IsNullOrWhiteSpace(result.Rating))
+            {
+                list.Add(new CountryCertification(result.CountryCode!.Trim(), result.Rating!.Trim()));
+            }
+        }
 
-        _cache[cacheKey] = rating;
-        return rating;
+        _tvCache[tmdbId] = list;
+        return list;
+    }
+
+    private static string? PickCountry(IReadOnlyList<CountryCertification> certifications, string country)
+    {
+        return certifications
+            .Where(c => string.Equals(c.Country, country, StringComparison.OrdinalIgnoreCase))
+            .Select(c => c.Certification)
+            .FirstOrDefault();
+    }
+
+    private static IReadOnlyList<string> PickForeign(IReadOnlyList<CountryCertification> certifications)
+    {
+        return certifications
+            .Where(c => !string.Equals(c.Country, "DE", StringComparison.OrdinalIgnoreCase))
+            .Select(c => c.Certification)
+            .ToList();
     }
 
     /// <summary>
@@ -149,6 +231,8 @@ public class TmdbClient
             return null;
         }
     }
+
+    private readonly record struct CountryCertification(string Country, string Certification);
 
     private sealed class ReleaseDatesResponse
     {
