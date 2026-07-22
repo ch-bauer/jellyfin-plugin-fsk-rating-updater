@@ -96,13 +96,27 @@ public class UpdateFskRatingsTask : IScheduledTask
             _logger.LogInformation("FSK Rating Updater: no TMDb API key configured, running in normalization-only mode.");
         }
 
-        // Process parents before children so seasons/episodes can inherit a rating
-        // that was fixed up earlier in the same run.
-        var items = _libraryManager.GetItemList(new InternalItemsQuery
+        var query = new InternalItemsQuery
         {
             IncludeItemTypes = itemTypes.ToArray(),
             Recursive = true
-        })
+        };
+
+        var ancestorIds = (config.LibraryIds ?? Array.Empty<string>())
+            .Select(id => Guid.TryParse(id, out var guid) ? guid : Guid.Empty)
+            .Where(guid => guid != Guid.Empty)
+            .ToArray();
+        if (ancestorIds.Length > 0)
+        {
+            // Restrict the scan to the selected libraries; their item ids are ancestors
+            // of every movie/series/season/episode they contain.
+            query.AncestorIds = ancestorIds;
+            _logger.LogInformation("FSK Rating Updater: restricted to {Count} selected librarie(s).", ancestorIds.Length);
+        }
+
+        // Process parents before children so seasons/episodes can inherit a rating
+        // that was fixed up earlier in the same run.
+        var items = _libraryManager.GetItemList(query)
             .OrderBy(i => i switch
             {
                 Season => 1,

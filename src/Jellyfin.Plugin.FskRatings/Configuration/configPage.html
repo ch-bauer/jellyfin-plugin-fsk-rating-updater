@@ -29,6 +29,14 @@
                     </div>
                 </div>
 
+                <div class="inputContainer">
+                    <label class="inputLabel">Libraries to process</label>
+                    <div id="LibrariesContainer" class="fieldDescription">Loading libraries&hellip;</div>
+                    <div class="fieldDescription">
+                        Select which libraries the task should scan. When none are selected, every library is processed.
+                    </div>
+                </div>
+
                 <div class="checkboxContainer">
                     <label>
                         <input is="emby-checkbox" type="checkbox" id="UpdateMovies" />
@@ -98,10 +106,55 @@
         (function () {
             var pluginId = "b7c3f1e2-9a4d-4e8b-b0c6-2f5d8a913c47";
 
+            function renderLibraries(libraries, selectedIds) {
+                var container = document.querySelector('#LibrariesContainer');
+                if (!libraries || !libraries.length) {
+                    container.textContent = 'No libraries found.';
+                    return;
+                }
+
+                var selected = selectedIds || [];
+                container.innerHTML = '';
+                libraries.forEach(function (library) {
+                    var label = document.createElement('label');
+                    label.className = 'checkboxContainer';
+
+                    var input = document.createElement('input');
+                    input.setAttribute('is', 'emby-checkbox');
+                    input.type = 'checkbox';
+                    input.className = 'fskLibraryCheckbox';
+                    input.value = library.Id;
+                    input.checked = selected.indexOf(library.Id) !== -1;
+
+                    var span = document.createElement('span');
+                    span.textContent = library.Name;
+
+                    label.appendChild(input);
+                    label.appendChild(span);
+                    container.appendChild(label);
+                });
+            }
+
+            function getSelectedLibraryIds() {
+                return Array.prototype.map.call(
+                    document.querySelectorAll('.fskLibraryCheckbox:checked'),
+                    function (checkbox) { return checkbox.value; });
+            }
+
             document.querySelector('#FskRatingsConfigPage')
                 .addEventListener('pageshow', function () {
                     Dashboard.showLoadingMsg();
                     ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                        ApiClient.ajax({
+                            type: 'GET',
+                            url: ApiClient.getUrl('FskRatings/Libraries'),
+                            dataType: 'json'
+                        }).then(function (libraries) {
+                            renderLibraries(libraries, config.LibraryIds || []);
+                        }, function () {
+                            document.querySelector('#LibrariesContainer').textContent = 'Could not load libraries.';
+                        });
+
                         document.querySelector('#TmdbApiKey').value = config.TmdbApiKey || '';
                         document.querySelector('#DryRun').checked = config.DryRun;
                         document.querySelector('#UpdateMovies').checked = config.UpdateMovies;
@@ -121,6 +174,7 @@
                     Dashboard.showLoadingMsg();
                     ApiClient.getPluginConfiguration(pluginId).then(function (config) {
                         config.TmdbApiKey = document.querySelector('#TmdbApiKey').value.trim();
+                        config.LibraryIds = getSelectedLibraryIds();
                         config.DryRun = document.querySelector('#DryRun').checked;
                         config.UpdateMovies = document.querySelector('#UpdateMovies').checked;
                         config.UpdateSeries = document.querySelector('#UpdateSeries').checked;

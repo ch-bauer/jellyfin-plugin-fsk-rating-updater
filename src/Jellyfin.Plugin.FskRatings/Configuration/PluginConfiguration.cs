@@ -41,6 +41,13 @@ public class PluginConfiguration : BasePluginConfiguration
     public bool DryRun { get; set; } = true;
 
     /// <summary>
+    /// Gets or sets the ids of the libraries the task is restricted to. Each entry is
+    /// the item id (GUID) of a library as returned by the virtual folders API. When
+    /// empty, every library is processed (backward-compatible default).
+    /// </summary>
+    public string[] LibraryIds { get; set; } = Array.Empty<string>();
+
+    /// <summary>
     /// Gets or sets a value indicating whether movies are processed.
     /// </summary>
     public bool UpdateMovies { get; set; } = true;
