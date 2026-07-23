@@ -1,8 +1,8 @@
 using System.Reflection;
 using System.Runtime.Loader;
+using System.Text.Json;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 
 namespace Jellyfin.Plugin.FskRatings.Web;
 
@@ -60,16 +60,48 @@ public class FileTransformationRegistration : IHostedService
                 return Task.CompletedTask;
             }
 
-            var payload = new JObject
+            // Build the payload as a plain JSON string so we never touch Newtonsoft.Json ourselves.
+            // The File Transformation plugin bundles its own copy of Newtonsoft.Json; a JObject built
+            // from *our* bundled copy is a distinct runtime type from *its* JObject (same name, different
+            // assembly identity), so passing one through reflection fails CheckValue with the nonsensical
+            // "JObject cannot be converted to JObject". Instead we materialize the argument from the
+            // register method's own parameter type, guaranteeing an exact type match.
+            var payloadJson = JsonSerializer.Serialize(new
             {
-                { "id", TransformationId },
-                { "fileNamePattern", "index.html" },
-                { "callbackAssembly", GetType().Assembly.FullName },
-                { "callbackClass", typeof(OverlayScriptInjector).FullName },
-                { "callbackMethod", nameof(OverlayScriptInjector.TransformIndexHtml) }
-            };
+                id = TransformationId,
+                fileNamePattern = "index.html",
+                callbackAssembly = GetType().Assembly.FullName,
+                callbackClass = typeof(OverlayScriptInjector).FullName,
+                callbackMethod = nameof(OverlayScriptInjector.TransformIndexHtml)
+            });
 
-            registerMethod.Invoke(null, [payload]);
+            var parameterType = registerMethod.GetParameters().FirstOrDefault()?.ParameterType;
+            if (parameterType is null)
+            {
+                _logger.LogWarning("File Transformation plugin's registration method has an unexpected signature; FSK overlay falls back to middleware injection.");
+                return Task.CompletedTask;
+            }
+
+            object payloadArg;
+            if (parameterType == typeof(string))
+            {
+                payloadArg = payloadJson;
+            }
+            else
+            {
+                // parameterType is the File Transformation plugin's own JObject. Parse the JSON with
+                // that exact type's static Parse(string) so the argument's identity matches the method.
+                var parseMethod = parameterType.GetMethod("Parse", BindingFlags.Public | BindingFlags.Static, [typeof(string)]);
+                if (parseMethod is null)
+                {
+                    _logger.LogWarning("File Transformation plugin's payload type '{Type}' has no Parse(string) method; FSK overlay falls back to middleware injection.", parameterType.FullName);
+                    return Task.CompletedTask;
+                }
+
+                payloadArg = parseMethod.Invoke(null, [payloadJson])!;
+            }
+
+            registerMethod.Invoke(null, [payloadArg]);
             Registered = true;
             _logger.LogInformation("FSK overlay script registered with the File Transformation plugin.");
         }
